@@ -1,0 +1,803 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#1b3a5c">
+<title>わかやまガイド</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--indigo:#1b3a5c;--il:#2a5a8c;--ip:rgba(27,58,92,0.06);--im:rgba(27,58,92,0.12);--ib:rgba(27,58,92,0.08);--sky:#4a90c4;--sp:rgba(74,144,196,0.08);--bg:#f8f9fb;--card:#fff;--text:#1a1a2e;--t2:#5a5a6e;--t3:#a0a0b0;--green:#2d9a5c;--amber:#d4871a;--red:#c0392b;--purple:#7c5cbf;--gold:#c59b34;--sans:'Noto Sans JP',sans-serif;--mono:'DM Mono',monospace;--r:16px;--rs:12px}
+body{font-family:var(--sans);background:var(--bg);color:var(--text);height:100dvh;display:flex;flex-direction:column;overflow:hidden;-webkit-font-smoothing:antialiased}
+::-webkit-scrollbar{width:0;background:transparent}
+@keyframes fadeSlide{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+@keyframes bounce{0%,60%,100%{transform:translateY(0)}30%{transform:translateY(-4px)}}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(74,144,196,0.15)}50%{box-shadow:0 0 0 8px rgba(74,144,196,0)}}
+.anim{animation:fadeSlide .3s ease}
+
+/* ── Header ── */
+.hd{padding:16px 20px 6px;text-align:center;flex-shrink:0;position:relative;z-index:10}
+.hd h1{font-size:18px;font-weight:600;letter-spacing:.5px;color:var(--indigo)}
+.hd-line{width:40px;height:2px;background:linear-gradient(90deg,var(--indigo),var(--sky));margin:8px auto;border-radius:1px}
+.hd-btns{position:absolute;right:16px;top:12px;display:flex;gap:6px}
+.hd-btn{background:none;border:1px solid var(--ib);border-radius:20px;padding:4px 10px;font-size:10px;color:var(--t3);cursor:pointer;font-family:var(--sans)}
+
+/* ── Bus Navigator ── */
+.bus-nav{background:var(--card);border:1px solid var(--ib);border-radius:var(--r);padding:14px;margin-bottom:16px}
+.bus-nav-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.bus-nav-hd h3{font-size:13px;font-weight:600;color:var(--indigo)}
+.bus-nav-btn{background:var(--ip);border:1px solid var(--ib);border-radius:20px;padding:4px 12px;font-size:10px;color:var(--sky);cursor:pointer;font-family:var(--sans)}
+.bus-nav-btn:active{background:var(--sp)}
+.bus-result{display:flex;flex-direction:column;gap:8px}
+.bus-stop{display:flex;align-items:center;gap:12px;padding:10px 12px;background:var(--bg);border-radius:var(--rs)}
+.bus-stop-dist{min-width:52px;text-align:center}
+.bus-stop-dist .num{font-family:var(--mono);font-size:16px;font-weight:700;color:var(--indigo)}
+.bus-stop-dist .unit{font-size:9px;color:var(--t3)}
+.bus-stop-info{flex:1}
+.bus-stop-info h4{font-size:13px;font-weight:600}
+.bus-stop-info p{font-size:10px;color:var(--t2);line-height:1.4}
+.bus-stop-dir{font-size:18px;color:var(--sky);flex-shrink:0}
+.bus-loading{text-align:center;font-size:12px;color:var(--t3);padding:12px}
+.bus-err{text-align:center;font-size:11px;color:var(--t3);padding:8px;line-height:1.5}
+
+/* ── Content ── */
+.content{flex:1;display:flex;flex-direction:column;min-height:0}
+.vw{flex:1;display:none;flex-direction:column;min-height:0}.vw.on{display:flex}
+.vw-scroll{flex:1;overflow-y:auto;padding:0 20px 20px;-webkit-overflow-scrolling:touch}
+
+/* ── Bottom Nav (replaces top nav) ── */
+.bnav{flex-shrink:0;display:flex;border-top:1px solid var(--ib);background:var(--card);padding:6px 8px 0;padding-bottom:max(6px,env(safe-area-inset-bottom))}
+.bn{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:5px 0;cursor:pointer;-webkit-tap-highlight-color:transparent;transition:color .2s;color:var(--t3);position:relative}
+.bn.on{color:var(--indigo)}
+.bn.on::after{content:'';position:absolute;top:-7px;width:20px;height:2px;border-radius:1px;background:var(--indigo)}
+.bn-ic{font-size:16px;line-height:1}
+.bn-lb{font-size:9px;font-weight:500}
+
+/* ── Explore Page ── */
+.sec-title{font-size:11px;font-weight:600;color:var(--t3);letter-spacing:1.5px;margin:16px 0 10px;text-transform:uppercase}
+.guide-cats{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px}
+.gcat{background:var(--card);border:1px solid var(--ib);border-radius:var(--r);padding:18px 12px;cursor:pointer;text-align:center;transition:all .2s}
+.gcat:active{transform:scale(.97);background:var(--ip)}
+.gcat .gn{font-size:13px;font-weight:600;color:var(--indigo)}
+.gcat .gc{font-size:10px;color:var(--t3);margin-top:3px}
+.guide-list{display:flex;flex-direction:column;gap:6px}
+.gi{background:var(--card);border:1px solid var(--ib);border-radius:var(--r);padding:14px;cursor:pointer;transition:all .2s}
+.gi:active{transform:scale(.98)}
+.gi h3{font-size:14px;font-weight:600;color:var(--indigo);margin-bottom:2px}
+.gi .gm{font-size:11px;color:var(--t3)}
+.gi .gd{font-size:12px;color:var(--t2);margin-top:6px;line-height:1.7;display:none}
+.gi.open .gd{display:block}
+.gi .gtags{display:flex;gap:4px;margin-top:6px;flex-wrap:wrap}
+.gtag{padding:2px 8px;border-radius:6px;font-size:9px;font-weight:600}
+.gtag-r{background:rgba(74,144,196,.08);color:var(--sky)}
+.gtag-g{background:rgba(45,154,92,.08);color:var(--green)}
+.back-btn{background:none;border:1px solid var(--ib);border-radius:20px;padding:5px 14px;font-size:11px;color:var(--sky);cursor:pointer;font-family:var(--sans);margin-bottom:12px}
+
+/* ── FAQ (from original) ── */
+.faq-bread{display:flex;align-items:center;justify-content:center;gap:6px;padding:4px 0 16px;font-size:12px;color:var(--t3)}
+.faq-bread button{background:none;border:none;color:var(--sky);font-size:12px;font-family:var(--sans);cursor:pointer;font-weight:500}
+.faq-home{display:grid;grid-template-columns:1fr 1fr;gap:10px;max-width:360px;margin:0 auto}
+.cat-card{background:var(--card);border:1px solid var(--ib);border-radius:var(--r);padding:22px 14px 18px;cursor:pointer;transition:all .25s;text-align:center}
+.cat-card:active{transform:scale(.97);background:var(--ip)}
+.cat-card .cn{font-size:14px;font-weight:600;color:var(--indigo)}
+.cat-card .cc{font-size:11px;color:var(--t3);margin-top:5px}
+.faq-q{width:100%;padding:14px 0;border:none;background:transparent;font-family:var(--sans);font-size:14px;color:var(--text);text-align:center;cursor:pointer;border-bottom:1px solid var(--ib)}
+.faq-q:active{color:var(--sky)}.faq-q:last-child{border-bottom:none}
+.faq-ans{max-width:420px;margin:0 auto}
+.faq-ans h3{font-size:17px;font-weight:600;color:var(--indigo);text-align:center;margin-bottom:16px;line-height:1.5}
+.faq-ans .body{font-size:13.5px;line-height:2;color:var(--t2)}
+.faq-ans .body a{color:var(--sky);text-decoration:none;word-break:break-all}
+
+/* ── Chat (from original) ── */
+.usage-bar{display:flex;align-items:center;gap:8px;padding:4px 20px 6px;max-width:400px;margin:0 auto;width:100%}
+.usage-bar .lb{font-size:10px;color:var(--t3);font-family:var(--mono)}
+.tracks{flex:1;display:flex;gap:5px}
+.track{flex:1;height:3px;border-radius:2px;background:var(--ip)}
+.fill{height:100%;border-radius:2px;transition:width .4s}
+.chat-scroll{flex:1;overflow-y:auto;padding:8px 20px}
+.msg{display:flex;flex-direction:column;margin-bottom:12px}
+.msg.user{align-items:flex-end}.msg.assistant{align-items:flex-start}
+.bubble{max-width:84%;padding:11px 15px;font-size:13.5px;line-height:1.8;white-space:pre-wrap;word-break:break-word}
+.bubble a{color:var(--sky);text-decoration:underline;word-break:break-all}
+.msg.assistant .bubble{border-radius:16px 16px 16px 4px;background:var(--card);border:1px solid var(--ib)}
+.msg.user .bubble{border-radius:16px 16px 4px 16px;background:var(--indigo);color:rgba(255,255,255,.95)}
+.mbadge{display:inline-flex;align-items:center;gap:3px;font-size:9px;font-family:var(--mono);border-radius:6px;padding:2px 7px;margin-top:3px}
+.mbadge .dot{width:4px;height:4px;border-radius:50%}
+.typing{display:flex;margin-bottom:12px}
+.typing-in{padding:11px 16px;border-radius:16px 16px 16px 4px;background:var(--card);border:1px solid var(--ib);display:flex;align-items:center;gap:8px}
+.dots{display:flex;gap:3px}.d{width:5px;height:5px;border-radius:50%;opacity:.4;animation:bounce 1.2s infinite}
+.d:nth-child(2){animation-delay:.15s}.d:nth-child(3){animation-delay:.3s}
+.err-msg{text-align:center;color:#b33;font-size:12px;padding:8px;background:rgba(180,50,50,0.06);border-radius:var(--rs);margin:8px 20px}
+.in-area{padding:6px 16px 12px;flex-shrink:0}
+.in-row{display:flex;align-items:flex-end;gap:6px;max-width:480px;margin:0 auto}
+.mic,.vbtn{width:36px;height:36px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:14px;cursor:pointer;border:1px solid var(--ib);background:var(--card)}
+.mic.on{border-color:var(--sky);background:var(--sp);animation:pulse 1.5s infinite}
+.in-wrap{flex:1;display:flex;background:var(--card);border-radius:20px;border:1px solid var(--ib);overflow:hidden}
+.in-wrap input{flex:1;border:none;outline:none;padding:9px 14px;font-size:14px;font-family:var(--sans);background:transparent;color:var(--text)}
+.send{background:transparent;border:none;padding:0 14px;color:var(--t3);font-size:16px;cursor:not-allowed;display:flex;align-items:center}
+.send.ready{background:var(--indigo);color:#fff;cursor:pointer;border-radius:0 20px 20px 0}
+
+/* ── My Trip ── */
+.stamp-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:16px}
+.st-item{background:var(--card);border:1px solid var(--ib);border-radius:var(--r);padding:12px 6px;text-align:center;cursor:pointer;transition:all .2s}
+.st-item:active{transform:scale(.95)}
+.st-item.got{border-color:var(--green);background:rgba(45,154,92,.04)}
+.st-n{font-size:10px;font-weight:500;margin-top:4px;line-height:1.3}
+.st-check{width:28px;height:28px;border-radius:50%;margin:0 auto;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700}
+.st-check.empty{border:2px dashed var(--ib);color:transparent}
+.st-check.done{background:var(--green);color:#fff}
+.prog-bar{height:6px;border-radius:3px;background:var(--ip);margin-bottom:16px;overflow:hidden}
+.prog-fill{height:100%;border-radius:3px;background:linear-gradient(90deg,var(--green),var(--sky));transition:width .6s}
+.trip-card{background:var(--card);border:1px solid var(--ib);border-radius:var(--r);padding:16px;margin-bottom:10px;cursor:pointer;text-align:center}
+.trip-card:active{transform:scale(.98)}
+.trip-card h3{font-size:14px;font-weight:600;color:var(--indigo);margin-bottom:4px}
+.trip-card p{font-size:11px;color:var(--t2);line-height:1.5}
+.trip-btn{display:inline-block;margin-top:10px;padding:8px 20px;border-radius:20px;font-size:12px;font-weight:600;border:none;cursor:pointer;font-family:var(--sans)}
+
+/* ── Survey ── */
+.sv-progress{font-size:10px;color:var(--t3);text-align:center;margin-bottom:8px;font-family:var(--mono)}
+.sv-q{font-size:16px;font-weight:600;text-align:center;color:var(--indigo);margin-bottom:16px;line-height:1.5}
+.sv-opts{display:flex;flex-direction:column;gap:6px;max-width:380px;margin:0 auto}
+.sv-opt{padding:12px 16px;border:1.5px solid var(--ib);border-radius:var(--rs);background:var(--card);font-size:14px;font-family:var(--sans);color:var(--text);cursor:pointer;text-align:center;transition:all .15s}
+.sv-opt:active{transform:scale(.97)}
+.sv-opt.sel{border-color:var(--indigo);background:var(--ip);font-weight:500}
+.sv-input{width:100%;max-width:380px;margin:0 auto;display:block;padding:12px 16px;border:1.5px solid var(--ib);border-radius:var(--rs);font-size:15px;font-family:var(--sans);background:var(--card);outline:none}
+.sv-input:focus{border-color:var(--sky)}
+.sv-night{display:flex;gap:16px;max-width:300px;margin:0 auto}
+.sv-nf{flex:1;text-align:center}
+.sv-nf label{font-size:11px;color:var(--t3);display:block;margin-bottom:6px}
+.sv-stepper{display:flex;align-items:center;background:var(--card);border:1.5px solid var(--ib);border-radius:var(--rs);overflow:hidden}
+.sv-sb{width:40px;height:40px;border:none;background:transparent;font-size:18px;color:var(--sky);cursor:pointer;font-family:var(--sans)}
+.sv-sv{flex:1;text-align:center;font-size:18px;font-weight:700}
+.sv-nav{display:flex;gap:8px;justify-content:center;margin-top:20px}
+.sv-btn{padding:10px 28px;border-radius:20px;font-size:13px;font-weight:600;border:none;cursor:pointer;font-family:var(--sans)}
+.sv-btn-back{background:var(--ip);color:var(--t3)}
+.sv-btn-next{background:var(--indigo);color:#fff}
+.sv-btn-next:disabled{opacity:.3;cursor:default}
+/* Omamori */
+.omamori{width:160px;height:240px;border-radius:16px;margin:0 auto 16px;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#fff;box-shadow:0 6px 30px rgba(0,0,0,.2);animation:fadeSlide .6s ease}
+.om-i{font-size:36px;margin-bottom:8px}.om-n{font-size:15px;font-weight:700}.om-b{font-size:10px;opacity:.7;font-style:italic}
+.coupon-box{background:var(--indigo);color:#fff;border-radius:var(--r);padding:16px;text-align:center;margin:12px auto;max-width:300px}
+.coupon-code{font-family:var(--mono);font-size:18px;letter-spacing:.15em;background:rgba(255,255,255,.1);padding:6px 14px;border-radius:8px;display:inline-block;margin-top:6px}
+
+/* ── Modal ── */
+.modal-bg{position:fixed;inset:0;z-index:100;background:rgba(27,58,92,.25);backdrop-filter:blur(16px);display:none;align-items:center;justify-content:center;padding:20px}
+.modal-bg.show{display:flex}
+.modal{background:var(--card);border-radius:20px;padding:28px;max-width:360px;width:100%}
+.modal h2{text-align:center;font-size:16px;font-weight:600;color:var(--indigo);margin-bottom:4px}
+.modal .desc{text-align:center;font-size:12px;color:var(--t2);line-height:1.6;margin-bottom:16px}
+.modal input[type="password"]{width:100%;padding:10px 12px;border-radius:var(--rs);border:1px solid var(--ib);font-size:13px;font-family:var(--mono);background:var(--bg);outline:none}
+.modal .lnk{display:block;text-align:center;margin:8px 0;font-size:11px;color:var(--sky);text-decoration:none}
+.modal .sbtn{width:100%;padding:11px;border-radius:var(--rs);border:none;background:rgba(0,0,0,.04);color:var(--t3);font-size:14px;font-weight:600;cursor:not-allowed;font-family:var(--sans);transition:all .2s}
+.modal .sbtn.ready{background:var(--indigo);color:#fff;cursor:pointer}
+.modal .info{margin-top:12px;padding:10px;border-radius:var(--rs);background:var(--ip);font-size:10px;color:var(--t2);line-height:1.6;text-align:center}
+.code-digit{width:48px;height:56px;border-radius:var(--rs);border:2px solid var(--ib);background:var(--bg);font-family:var(--mono);font-size:24px;font-weight:700;text-align:center;color:var(--text);outline:none;-webkit-appearance:none}
+.code-digit:focus{border-color:var(--sky);background:var(--card)}
+.ft{padding:4px 0;text-align:center;flex-shrink:0}.ft p{font-size:8px;color:var(--t3);font-family:var(--mono)}
+
+/* ── Dark Mode ── */
+@media(prefers-color-scheme:dark){
+  :root{--bg:#0d1117;--card:#161b22;--text:#e6edf3;--t2:#8b949e;--t3:#6e7681;--ib:rgba(255,255,255,.08);--ip:rgba(255,255,255,.04);--im:rgba(255,255,255,.1)}
+  body{background:var(--bg);color:var(--text)}
+  .hd h1{color:#e6edf3}
+  .bnav{background:#161b22;border-top-color:rgba(255,255,255,.06)}
+  .bn.on{color:var(--sky)}
+  .bn.on::after{background:var(--sky)}
+  .gcat,.gi,.cat-card,.trip-card,.st-item,.sv-opt,.uc,.mt{background:var(--card);border-color:rgba(255,255,255,.08)}
+  .gcat:active,.gi:active,.cat-card:active{background:rgba(255,255,255,.06)}
+  .gcat .gn,.cat-card .cn,.gi h3,.faq-ans h3{color:#e6edf3}
+  .gi .gd{color:var(--t2)}
+  .faq-q{color:#e6edf3;border-bottom-color:rgba(255,255,255,.06)}
+  .faq-ans .body{color:var(--t2)}
+  .msg.assistant .bubble{background:var(--card);border-color:rgba(255,255,255,.08);color:#e6edf3}
+  .in-wrap{background:var(--card);border-color:rgba(255,255,255,.08)}
+  .in-wrap input{color:#e6edf3;background:transparent}
+  .mic,.vbtn{background:var(--card);border-color:rgba(255,255,255,.08)}
+  .modal{background:var(--card)}
+  .modal h2{color:#e6edf3}
+  .modal input[type="password"]{background:var(--bg);color:#e6edf3;border-color:rgba(255,255,255,.1)}
+  .sv-input{background:var(--card);color:#e6edf3;border-color:rgba(255,255,255,.08)}
+  .sv-opt{background:var(--card);color:#e6edf3;border-color:rgba(255,255,255,.08)}
+  .sv-opt.sel{background:rgba(74,144,196,.15);border-color:var(--sky)}
+  .sv-stepper{background:var(--card);border-color:rgba(255,255,255,.08)}
+  .sv-stepper .sv-sv{color:#e6edf3}
+  .sv-q{color:#e6edf3}
+  .back-btn{border-color:rgba(255,255,255,.1);color:var(--sky)}
+  .st-item.got{border-color:var(--green);background:rgba(45,154,92,.1)}
+  .prog-bar{background:rgba(255,255,255,.06)}
+  .usage-bar .track{background:rgba(255,255,255,.06)}
+  .code-digit{background:var(--bg);color:#e6edf3;border-color:rgba(255,255,255,.12)}
+  .code-digit:focus{background:var(--card);border-color:var(--sky)}
+  .err-msg{background:rgba(180,50,50,.15)}
+  .gtag-r{background:rgba(74,144,196,.12)}.gtag-g{background:rgba(45,154,92,.12)}
+  .trip-card{background:var(--card);border-color:rgba(255,255,255,.08)}
+  .trip-card h3{color:#e6edf3}
+  .bus-nav{background:var(--card);border-color:rgba(255,255,255,.08)}
+  .bus-nav-hd h3{color:#e6edf3}
+  .bus-stop{background:rgba(255,255,255,.04)}
+  .bus-stop-dist .num{color:var(--sky)}
+  .bus-stop-info h4{color:#e6edf3}
+}
+</style>
+</head>
+<body>
+<header class="hd">
+  <h1 id="hdTitle">わかやまガイド</h1>
+  <div class="hd-btns">
+    <button class="hd-btn" onclick="toggleLang()" id="langBtn">EN</button>
+    <button class="hd-btn" id="keyBtn" style="display:none" onclick="resetKey()">Key</button>
+  </div>
+</header>
+<div class="hd-line"></div>
+<div class="content">
+  <!-- EXPLORE -->
+  <div class="vw on" id="exploreView"><div class="vw-scroll" id="exploreScroll"></div></div>
+  <!-- FAQ -->
+  <div class="vw" id="faqView"><div class="vw-scroll" id="faqScroll"></div></div>
+  <!-- CHAT -->
+  <div class="vw" id="chatView">
+    <div class="usage-bar"><span class="lb">残</span><div class="tracks"><div class="track"><div class="fill" id="uL" style="width:100%;background:var(--green)"></div></div><div class="track"><div class="fill" id="uF" style="width:100%;background:var(--amber)"></div></div><div class="track"><div class="fill" id="uP" style="width:100%;background:var(--indigo)"></div></div></div><span class="lb" id="uC">1,350</span></div>
+    <div class="chat-scroll" id="chatScroll"></div>
+    <div class="in-area"><div class="in-row">
+      <button class="mic" id="micBtn" onclick="toggleMic()">🎤</button>
+      <div class="in-wrap"><input type="text" id="chatIn" placeholder=""><button class="send" id="sendBtn" onclick="sendMsg()">↑</button></div>
+      <button class="vbtn" id="vBtn" onclick="toggleV()">🔊</button>
+    </div></div>
+  </div>
+  <!-- MY TRIP -->
+  <div class="vw" id="tripView"><div class="vw-scroll" id="tripScroll"></div></div>
+  <!-- SURVEY -->
+  <div class="vw" id="surveyView"><div class="vw-scroll" id="surveyScroll"></div></div>
+</div>
+<div class="ft"><p id="ftTxt">Powered by Gemini · CRM Session Active</p></div>
+<div class="bnav">
+  <div class="bn on" onclick="showV('explore')"><div class="bn-ic">🏠</div><span class="bn-lb" id="nb0">探索</span></div>
+  <div class="bn" onclick="showV('faq')"><div class="bn-ic">❓</div><span class="bn-lb" id="nb1">FAQ</span></div>
+  <div class="bn" onclick="showV('chat')"><div class="bn-ic">💬</div><span class="bn-lb" id="nb2">AI</span></div>
+  <div class="bn" onclick="showV('trip')"><div class="bn-ic">📍</div><span class="bn-lb" id="nb3">旅程</span></div>
+  <div class="bn" onclick="showV('survey')"><div class="bn-ic">📋</div><span class="bn-lb" id="nb4">調査</span></div>
+</div>
+<div class="modal-bg" id="keyModal">
+  <div class="modal">
+    <h2>APIキーを設定</h2>
+    <p class="desc">Google AI Studioで無料取得</p>
+    <input type="password" id="keyIn" placeholder="AIzaSy..." oninput="updSave()">
+    <a class="lnk" href="https://aistudio.google.com/apikey" target="_blank">Google AI Studio →</a>
+    <button class="sbtn" id="saveBtn" onclick="saveKey()">設定して開始</button>
+    <button style="width:100%;padding:10px;border:none;background:transparent;color:var(--t3);font-size:12px;cursor:pointer;font-family:var(--sans);margin-top:6px" onclick="closeModal()">あとで / Later</button>
+    <div class="info">無料枠 1,350回/日</div>
+  </div>
+</div>
+<!-- Stamp Code Modal -->
+<div class="modal-bg" id="stampModal">
+  <div class="modal">
+    <h2 id="smTitle">チェックインコード</h2>
+    <p class="desc" id="smDesc">スポットに掲示された4桁コードを入力</p>
+    <div style="display:flex;justify-content:center;gap:8px;margin:16px 0" id="smDigits">
+      <input type="tel" maxlength="1" class="code-digit" id="cd0" oninput="onDigit(0)" onfocus="this.select()">
+      <input type="tel" maxlength="1" class="code-digit" id="cd1" oninput="onDigit(1)" onfocus="this.select()">
+      <input type="tel" maxlength="1" class="code-digit" id="cd2" oninput="onDigit(2)" onfocus="this.select()">
+      <input type="tel" maxlength="1" class="code-digit" id="cd3" oninput="onDigit(3)" onfocus="this.select()">
+    </div>
+    <div id="smErr" style="text-align:center;font-size:12px;color:var(--red);min-height:18px;margin-bottom:8px"></div>
+    <button class="sbtn" id="smBtn" onclick="verifyStamp()">確認 / Verify</button>
+    <button style="width:100%;padding:10px;border:none;background:transparent;color:var(--t3);font-size:12px;cursor:pointer;font-family:var(--sans);margin-top:6px" onclick="closeStampModal()">キャンセル / Cancel</button>
+  </div>
+</div>
+<script>
+// ═══════════════════════════════════════
+// CONFIG
+// ═══════════════════════════════════════
+const GAS_URL="https://script.google.com/macros/s/AKfycbyn0HgEFUOwkZhv5BZA-NhK9ylPIyTw4YD60JHYAf1T6nxLEd918SF2DBA4Iy9hsDuw/exec";
+const NAV="https://transfer-cloud.navitime.biz/wakayamabus/courses?busstop=00220204";
+
+// ═══ CRM SESSION ═══
+const SID=(()=>{try{let s=localStorage.getItem("wky_sid");if(!s){s="s_"+Date.now().toString(36)+Math.random().toString(36).slice(2,6);localStorage.setItem("wky_sid",s)}return s}catch{return"s_"+Date.now().toString(36)}})();
+
+function crmLog(action,data){
+  if(!GAS_URL)return;
+  try{const p=new URLSearchParams({sid:SID,action,data:JSON.stringify(data).substring(0,500),ts:new Date().toISOString()});new Image().src=GAS_URL+"?"+p}catch{}
+}
+
+// ═══ DATA ═══
+const GUIDES=[{"id": "ide", "cat": "gourmet", "n": {"en": "Ide Shoten", "ja": "井出商店"}, "area": {"en": "Central", "ja": "中心部"}, "h": "11:30-23:00", "p": "$$", "d": {"en": "THE iconic Wakayama ramen since 1953. Rich tonkotsu-shoyu broth. Always worth the queue.", "ja": "1953年創業。和歌山ラーメンの原点。豚骨醤油の濃厚スープ。行列必至。"}, "tip": {"en": "Order 'hayazushi' on the side — the local way.", "ja": "早寿司と一緒に食べるのが和歌山流。"}, "rec": true}, {"id": "marui", "cat": "gourmet", "n": {"en": "Marui", "ja": "丸井"}, "area": {"en": "Burakuricho", "ja": "ぶらくり丁"}, "h": "17:00-01:00", "p": "$", "d": {"en": "Late-night ramen with lighter broth. Perfect last stop.", "ja": "あっさり系深夜ラーメン。夜の〆に最適。"}}, {"id": "kuroshio", "cat": "gourmet", "n": {"en": "Kuroshio Market", "ja": "黒潮市場"}, "area": {"en": "Marina City", "ja": "マリーナシティ"}, "h": "10:00-17:00", "p": "$$$", "d": {"en": "Daily tuna cutting show at 12:30. Fresh sashimi and BBQ.", "ja": "12:30のマグロ解体ショー必見。海鮮丼とBBQ。"}, "rec": true}, {"id": "mikan_cafe", "cat": "gourmet", "n": {"en": "Mikan Sweets Cafes", "ja": "みかんスイーツカフェ"}, "area": {"en": "Various", "ja": "各地"}, "h": "10:00-18:00", "p": "$$", "d": {"en": "Wakayama's #1 mikan: juice, parfaits, ice cream, tarts.", "ja": "日本一のみかん。ジュース、パフェ、アイス、タルト。"}, "rec": true}, {"id": "izakaya", "cat": "gourmet", "n": {"en": "Burakuricho Izakaya", "ja": "ぶらくり丁居酒屋横丁"}, "area": {"en": "Central", "ja": "中心部"}, "h": "17:00-23:00+", "p": "$$", "d": {"en": "Traditional izakaya alley. Local sake + fresh seafood.", "ja": "居酒屋横丁。地酒と新鮮な海鮮。"}}, {"id": "street_food", "cat": "gourmet", "n": {"en": "Street Food Alley", "ja": "B級グルメ横丁"}, "area": {"en": "Burakuricho", "ja": "ぶらくり丁"}, "h": "11:00-20:00", "p": "$", "d": {"en": "Takoyaki, korokke, grilled skewers in the arcade.", "ja": "たこ焼き、コロッケ、串焼き。商店街でB級グルメ。"}}, {"id": "hanayama", "cat": "night", "n": {"en": "Hanayama Onsen", "ja": "花山温泉"}, "area": {"en": "East", "ja": "東部"}, "h": "7:00-23:00", "p": "$$", "d": {"en": "One of Japan's most mineral-rich hot springs. Brown-gold water since Taisho era.", "ja": "日本有数の高濃度炭酸泉。大正時代からの黄金色の湯。"}, "rec": true}, {"id": "fukuro", "cat": "night", "n": {"en": "Fukurono-yu", "ja": "ふくろうの湯"}, "area": {"en": "Central", "ja": "中心部"}, "h": "10:00-24:00", "p": "$$", "d": {"en": "Modern urban onsen. Open until midnight. Sauna included.", "ja": "街中のモダン温泉。深夜0時まで。サウナ完備。"}}, {"id": "castle_light", "cat": "night", "n": {"en": "Castle Illumination", "ja": "和歌山城ライトアップ"}, "area": {"en": "Central", "ja": "中心部"}, "h": "Sunset-24:00", "p": {"en": "Free", "ja": "無料"}, "d": {"en": "Castle beautifully lit every night. Free park for walking.", "ja": "毎晩ライトアップ。堀の周りの無料公園を散策。"}, "rec": true}, {"id": "kada_sunset", "cat": "night", "n": {"en": "Kada Sunset", "ja": "加太の夕日"}, "area": {"en": "Kada", "ja": "加太"}, "h": "17:00-18:30", "p": {"en": "Free", "ja": "無料"}, "d": {"en": "Island silhouettes against orange sky. Kansai's best sunset.", "ja": "友ヶ島のシルエット×夕焼け。関西屈指の絶景。"}, "rec": true}, {"id": "karaoke", "cat": "night", "n": {"en": "Karaoke", "ja": "カラオケ"}, "area": {"en": "Near stations", "ja": "駅周辺"}, "h": "18:00-05:00", "p": "$$", "d": {"en": "Multiple venues with English song libraries.", "ja": "英語曲ライブラリ・多言語対応店あり。"}}, {"id": "ph_tomo", "cat": "photo", "n": {"en": "Tomogashima Ruins", "ja": "友ヶ島砲台跡"}, "area": {"en": "Island", "ja": "島"}, "d": {"en": "Morning soft light. Shoot through arched tunnels for depth.", "ja": "午前の柔らかい光。アーチ越しの奥行き構図。"}}, {"id": "ph_saika", "cat": "photo", "n": {"en": "Saikazaki 'Amalfi'", "ja": "雑賀崎"}, "area": {"en": "West", "ja": "西部"}, "d": {"en": "Golden hour. Hilltop lookout for layered houses.", "ja": "ゴールデンアワー。高台から家並みの重なり。"}, "rec": true}, {"id": "ph_castle", "cat": "photo", "n": {"en": "Castle + Moat", "ja": "和歌山城と堀"}, "area": {"en": "Central", "ja": "中心部"}, "d": {"en": "Blue hour. West bridge reflection shot.", "ja": "ブルーアワー。西の丸橋からの映り込み。"}}, {"id": "ph_kimii", "cat": "photo", "n": {"en": "Kimiidera Sakura", "ja": "紀三井寺の桜"}, "area": {"en": "South", "ja": "南部"}, "d": {"en": "Late March-April. 231 steps framed by blossoms.", "ja": "3月下旬〜4月。231段の石段を桜越しに。"}}, {"id": "ph_tama", "cat": "photo", "n": {"en": "Tama Station", "ja": "たま電車・貴志駅"}, "area": {"en": "Kishigawa", "ja": "貴志川"}, "d": {"en": "Daytime. Cat-shaped roof with Nitama.", "ja": "日中。猫型の駅舎とニタマ駅長。"}, "rec": true}, {"id": "sp_kimii", "cat": "spiritual", "n": {"en": "Kimiidera Temple", "ja": "紀三井寺"}, "area": {"en": "South", "ja": "南部"}, "h": "8:00-17:00", "d": {"en": "231 steps to the hilltop. Saigoku #2 pilgrimage. Kansai's earliest cherry blossoms.", "ja": "231段の石段。西国二番。関西最速の桜。"}, "rec": true}, {"id": "sp_tosho", "cat": "spiritual", "n": {"en": "Kishu Toshogu", "ja": "紀州東照宮"}, "area": {"en": "Wakaura", "ja": "和歌浦"}, "h": "9:00-17:00", "d": {"en": "108 steps. Tokugawa-era vermilion architecture.", "ja": "108段の石段。朱塗りの徳川建築。"}}, {"id": "sp_awa", "cat": "spiritual", "n": {"en": "Awashima Shrine", "ja": "淡嶋神社"}, "area": {"en": "Kada", "ja": "加太"}, "h": "9:00-17:00", "d": {"en": "Thousands of donated dolls. Women's health prayers.", "ja": "何千もの人形。女性の健康祈願。"}}, {"id": "sp_koya", "cat": "spiritual", "n": {"en": "Mount Koya", "ja": "高野山"}, "area": {"en": "2h from city", "ja": "市内から2時間"}, "d": {"en": "Shingon Buddhism's holiest site. Temple stays with morning prayers.", "ja": "真言宗の聖地。宿坊での朝の勤行体験。"}, "rec": true}, {"id": "sp_kumano", "cat": "spiritual", "n": {"en": "Kumano Kodo", "ja": "熊野古道"}, "area": {"en": "South Wakayama", "ja": "紀南"}, "d": {"en": "UNESCO World Heritage pilgrimage trails. 3-4 day Nakahechi route.", "ja": "世界遺産の巡礼路。中辺路は3〜4日。"}}, {"id": "fm_adv", "cat": "family", "n": {"en": "Adventure World", "ja": "アドベンチャーワールド"}, "area": {"en": "Shirahama (80min)", "ja": "白浜（80分）"}, "d": {"en": "Pandas, safari, dolphins! Japan's best animal park. Full day.", "ja": "パンダ・サファリ・イルカ！日本最高の動物テーマパーク。"}, "rec": true}, {"id": "fm_tama", "cat": "family", "n": {"en": "Tama Train", "ja": "たま電車"}, "area": {"en": "Kishigawa", "ja": "貴志川線"}, "d": {"en": "Cat-themed train. Cat station master Nitama at the end.", "ja": "猫テーマの電車。終点に猫駅長ニタマ。"}}, {"id": "fm_porto", "cat": "family", "n": {"en": "Porto Europe", "ja": "ポルトヨーロッパ"}, "area": {"en": "Marina City", "ja": "マリーナシティ"}, "d": {"en": "European theme park. Free entry to townscape area.", "ja": "ヨーロッパの街並み。街並みエリア入場無料。"}}, {"id": "fm_castle", "cat": "family", "n": {"en": "Castle Park & Zoo", "ja": "和歌山城公園・動物園"}, "area": {"en": "Central", "ja": "中心部"}, "d": {"en": "Wide park, castle tower, FREE zoo with small animals.", "ja": "広い公園、天守閣、無料の動物園。"}, "rec": true}, {"id": "fm_beach", "cat": "family", "n": {"en": "Katanami Beach", "ja": "片男波海水浴場"}, "area": {"en": "Wakaura", "ja": "和歌浦"}, "d": {"en": "Shallow calm beach. Lifeguards in summer. Good for kids.", "ja": "遠浅で穏やか。夏はライフガード。子連れ安心。"}}, {"id": "om_ume", "cat": "omiyage", "n": {"en": "Kishu Nanko-ume", "ja": "紀州南高梅"}, "area": {"en": "Station shops", "ja": "駅土産店"}, "p": "800-3000", "d": {"en": "Japan's finest pickled plums. Salty to sweet honey.", "ja": "日本最高峰の梅干し。塩味からはちみつ味まで。"}, "rec": true}, {"id": "om_mikan", "cat": "omiyage", "n": {"en": "Mikan Products", "ja": "みかん製品"}, "area": {"en": "Station shops", "ja": "駅土産店"}, "p": "300-1500", "d": {"en": "100% juice, dried, jelly, cake. #1 producer in Japan.", "ja": "ジュース、ドライ、ゼリー、ケーキ。日本一の産地。"}, "rec": true}, {"id": "om_sake", "cat": "omiyage", "n": {"en": "Umeshu & Sake", "ja": "梅酒・地酒"}, "area": {"en": "Liquor shops", "ja": "酒店"}, "p": "800-5000", "d": {"en": "Kishu umeshu (plum wine) + Kuroushi sake. Airport bottles available.", "ja": "紀州梅酒と黒牛。空港持込サイズあり。"}}, {"id": "om_binchotan", "cat": "omiyage", "n": {"en": "Binchotan Charcoal", "ja": "備長炭"}, "area": {"en": "Specialty shops", "ja": "専門店"}, "p": "500-3000", "d": {"en": "World's finest charcoal. Air purifier & water filter gift.", "ja": "世界最高の炭。空気清浄・浄水ギフトに。"}}, {"id": "sf_police", "cat": "safety", "n": {"en": "Police", "ja": "警察"}, "d": {"en": "Emergency: 110. For crimes, accidents, lost items.", "ja": "緊急: 110。犯罪・事故・遺失物。"}}, {"id": "sf_fire", "cat": "safety", "n": {"en": "Fire / Ambulance", "ja": "消防・救急"}, "d": {"en": "Emergency: 119. For fire, medical emergencies.", "ja": "緊急: 119。火災・救急。"}}, {"id": "sf_jnto", "cat": "safety", "n": {"en": "Tourist Helpline", "ja": "観光ヘルプライン"}, "d": {"en": "050-3816-2787. English, Chinese, Korean — 24/7.", "ja": "050-3816-2787。英中韓対応。24時間。"}}, {"id": "sf_wifi", "cat": "safety", "n": {"en": "Free WiFi", "ja": "無料WiFi"}, "d": {"en": "JR Station, Castle area, Convenience stores (7-Eleven etc). WAKAYAMA Free Wi-Fi.", "ja": "JR駅・城周辺・コンビニ。WAKAYAMA Free Wi-Fi。"}}, {"id": "sf_atm", "cat": "safety", "n": {"en": "ATMs for Foreign Cards", "ja": "海外カード対応ATM"}, "d": {"en": "7-Eleven ATMs: Visa, MC, AMEX, UnionPay. English UI. Japan Post: Mon-Fri 9-17:30.", "ja": "セブン銀行ATM：Visa・MC・AMEX対応。郵便局：平日9-17:30。"}}];
+const STAMPS=[{"id": "s_castle", "n": {"en": "Wakayama Castle", "ja": "和歌山城"}, "cat": "history"}, {"id": "s_kimii", "n": {"en": "Kimiidera Temple", "ja": "紀三井寺"}, "cat": "history"}, {"id": "s_tomo", "n": {"en": "Tomogashima", "ja": "友ヶ島"}, "cat": "nature"}, {"id": "s_kuroshio", "n": {"en": "Kuroshio Market", "ja": "黒潮市場"}, "cat": "food"}, {"id": "s_porto", "n": {"en": "Porto Europe", "ja": "ポルトヨーロッパ"}, "cat": "play"}, {"id": "s_tama", "n": {"en": "Tama Train", "ja": "たま電車"}, "cat": "play"}, {"id": "s_awa", "n": {"en": "Awashima Shrine", "ja": "淡嶋神社"}, "cat": "history"}, {"id": "s_wakaura", "n": {"en": "Wakaura Bay", "ja": "和歌浦"}, "cat": "nature"}, {"id": "s_burakuri", "n": {"en": "Burakuricho", "ja": "ぶらくり丁"}, "cat": "food"}, {"id": "s_toshogu", "n": {"en": "Kishu Toshogu", "ja": "紀州東照宮"}, "cat": "history"}, {"id": "s_saika", "n": {"en": "Saikazaki", "ja": "雑賀崎"}, "cat": "nature"}, {"id": "s_ramen", "n": {"en": "Wakayama Ramen", "ja": "和歌山ラーメン"}, "cat": "food"}];
+const SV_Q=[{"id": "residence", "tp": "t", "t": {"en": "Where are you from?", "ja": "お住まいの国は？"}, "ph": {"en": "e.g. USA, France...", "ja": "例：アメリカ..."}, "rq": true}, {"id": "age", "tp": "s", "t": {"en": "Age group?", "ja": "年代は？"}, "o": [{"v": "10s", "l": {"en": "10s", "ja": "10代"}}, {"v": "20s", "l": {"en": "20s", "ja": "20代"}}, {"v": "30s", "l": {"en": "30s", "ja": "30代"}}, {"v": "40s", "l": {"en": "40s", "ja": "40代"}}, {"v": "50s", "l": {"en": "50s", "ja": "50代"}}, {"v": "60s", "l": {"en": "60s", "ja": "60代"}}, {"v": "70+", "l": {"en": "70+", "ja": "70代+"}}]}, {"id": "gender", "tp": "s", "t": {"en": "Gender", "ja": "性別"}, "o": [{"v": "m", "l": {"en": "Male", "ja": "男性"}}, {"v": "f", "l": {"en": "Female", "ja": "女性"}}, {"v": "x", "l": {"en": "No answer", "ja": "回答しない"}}]}, {"id": "transport_to", "tp": "s", "t": {"en": "How did you get here?", "ja": "交通手段は？"}, "o": [{"v": "skt", "l": {"en": "Shinkansen+train", "ja": "新幹線+在来線"}}, {"v": "plt", "l": {"en": "Plane+train", "ja": "飛行機+在来線"}}, {"v": "plb", "l": {"en": "Plane+bus", "ja": "飛行機+バス"}}, {"v": "tr", "l": {"en": "Train", "ja": "在来線"}}, {"v": "bus", "l": {"en": "Bus", "ja": "バス"}}, {"v": "car", "l": {"en": "Car", "ja": "車"}}, {"v": "ot", "l": {"en": "Other", "ja": "その他"}}]}, {"id": "trip_type", "tp": "s", "t": {"en": "Trip type?", "ja": "旅行形態は？"}, "o": [{"v": "solo", "l": {"en": "Solo", "ja": "一人旅"}}, {"v": "sp", "l": {"en": "Spouse", "ja": "配偶者"}}, {"v": "fam", "l": {"en": "Family", "ja": "家族"}}, {"v": "fr", "l": {"en": "Friends", "ja": "友人"}}, {"v": "biz", "l": {"en": "Business", "ja": "出張"}}, {"v": "ot", "l": {"en": "Other", "ja": "その他"}}]}, {"id": "japan_visits", "tp": "s", "t": {"en": "Japan visit count?", "ja": "日本訪問回数は？"}, "o": [{"v": "1", "l": {"en": "First time", "ja": "初めて"}}, {"v": "2", "l": {"en": "2", "ja": "2回"}}, {"v": "3", "l": {"en": "3", "ja": "3回"}}, {"v": "4+", "l": {"en": "4+", "ja": "4回+"}}, {"v": "res", "l": {"en": "I live here", "ja": "在住"}}]}, {"id": "wky_visits", "tp": "s", "t": {"en": "Wakayama visit count?", "ja": "和歌山訪問回数は？"}, "o": [{"v": "1", "l": {"en": "First time", "ja": "初めて"}}, {"v": "2", "l": {"en": "2", "ja": "2回"}}, {"v": "3+", "l": {"en": "3+", "ja": "3回+"}}, {"v": "res", "l": {"en": "I live here", "ja": "在住"}}]}, {"id": "reason", "tp": "m", "t": {"en": "Why Wakayama?", "ja": "和歌山を選んだ理由は？"}, "o": [{"v": "castle", "l": {"en": "Castle", "ja": "和歌山城"}}, {"v": "koya", "l": {"en": "Koya", "ja": "高野山"}}, {"v": "kumano", "l": {"en": "Kumano", "ja": "熊野古道"}}, {"v": "nature", "l": {"en": "Nature", "ja": "自然"}}, {"v": "food", "l": {"en": "Food", "ja": "グルメ"}}, {"v": "culture", "l": {"en": "Culture", "ja": "歴史文化"}}, {"v": "access", "l": {"en": "Access", "ja": "交通便利"}}, {"v": "ot", "l": {"en": "Other", "ja": "その他"}}]}, {"id": "nights", "tp": "n", "t": {"en": "Nights staying?", "ja": "宿泊日数は？"}}, {"id": "accommodation", "tp": "s", "t": {"en": "Accommodation?", "ja": "宿泊タイプは？"}, "o": [{"v": "htl", "l": {"en": "Hotel", "ja": "ホテル"}}, {"v": "ryo", "l": {"en": "Ryokan", "ja": "旅館"}}, {"v": "gst", "l": {"en": "Guesthouse", "ja": "ゲストハウス"}}, {"v": "pvt", "l": {"en": "Airbnb", "ja": "民泊"}}, {"v": "ot", "l": {"en": "Other", "ja": "その他"}}]}, {"id": "activities", "tp": "m", "t": {"en": "Activities?", "ja": "したことは？"}, "o": [{"v": "nat", "l": {"en": "Nature", "ja": "自然"}}, {"v": "food", "l": {"en": "Food", "ja": "グルメ"}}, {"v": "onsen", "l": {"en": "Onsen", "ja": "温泉"}}, {"v": "his", "l": {"en": "Historic", "ja": "史跡"}}, {"v": "shop", "l": {"en": "Shopping", "ja": "買物"}}, {"v": "cafe", "l": {"en": "Cafes", "ja": "カフェ"}}, {"v": "ot", "l": {"en": "Other", "ja": "その他"}}]}, {"id": "places", "tp": "m", "t": {"en": "Places visited?", "ja": "訪れた場所は？"}, "o": [{"v": "castle", "l": {"en": "Castle", "ja": "和歌山城"}}, {"v": "kimii", "l": {"en": "Kimiidera", "ja": "紀三井寺"}}, {"v": "tomo", "l": {"en": "Tomogashima", "ja": "友ヶ島"}}, {"v": "kuro", "l": {"en": "Kuroshio", "ja": "黒潮市場"}}, {"v": "tama", "l": {"en": "Tama Train", "ja": "たま電車"}}, {"v": "koya", "l": {"en": "Koya", "ja": "高野山"}}, {"v": "ot", "l": {"en": "Other", "ja": "その他"}}]}, {"id": "social", "tp": "m", "t": {"en": "Social media?", "ja": "使うSNSは？"}, "o": [{"v": "ig", "l": {"en": "Instagram", "ja": "Instagram"}}, {"v": "fb", "l": {"en": "Facebook", "ja": "Facebook"}}, {"v": "x", "l": {"en": "X", "ja": "X"}}, {"v": "yt", "l": {"en": "YouTube", "ja": "YouTube"}}, {"v": "tt", "l": {"en": "TikTok", "ja": "TikTok"}}, {"v": "rn", "l": {"en": "RedNote", "ja": "小紅書"}}, {"v": "no", "l": {"en": "None", "ja": "なし"}}]}, {"id": "ota", "tp": "m", "t": {"en": "Travel services?", "ja": "旅行サービスは？"}, "o": [{"v": "bk", "l": {"en": "Booking.com", "ja": "Booking.com"}}, {"v": "ab", "l": {"en": "Airbnb", "ja": "Airbnb"}}, {"v": "ta", "l": {"en": "TripAdvisor", "ja": "TripAdvisor"}}, {"v": "kl", "l": {"en": "Klook", "ja": "Klook"}}, {"v": "tc", "l": {"en": "Trip.com", "ja": "Trip.com"}}, {"v": "no", "l": {"en": "None", "ja": "なし"}}]}, {"id": "search_engine", "tp": "s", "t": {"en": "Search engine?", "ja": "検索エンジンは？"}, "o": [{"v": "g", "l": {"en": "Google", "ja": "Google"}}, {"v": "y", "l": {"en": "Yahoo", "ja": "Yahoo"}}, {"v": "b", "l": {"en": "Bing", "ja": "Bing"}}, {"v": "bd", "l": {"en": "Baidu", "ja": "百度"}}, {"v": "nv", "l": {"en": "NAVER", "ja": "NAVER"}}]}, {"id": "booking", "tp": "s", "t": {"en": "How arranged?", "ja": "手配方法は？"}, "o": [{"v": "ag", "l": {"en": "Agency", "ja": "旅行代理店"}}, {"v": "ol", "l": {"en": "Online", "ja": "OTA"}}, {"v": "in", "l": {"en": "Individual", "ja": "個別サイト"}}]}];
+
+// ═══ MOVED DATA (hoisted for init safety) ═══
+const GCATS=[
+  {id:"gourmet",color:"var(--red)"},{id:"night",color:"var(--purple)"},
+  {id:"photo",color:"var(--sky)"},{id:"spiritual",color:"var(--amber)"},
+  {id:"family",color:"var(--green)"},{id:"omiyage",color:"var(--gold)"},
+  {id:"safety",color:"var(--red)"},
+];
+const BUS_STOPS=[
+  {id:"jr",n:{en:"JR Wakayama Sta.",ja:"JR和歌山駅"},lat:34.2283,lng:135.1908,info:{en:"Stops 1-6. Main hub for all routes.",ja:"1〜6番のりば。全路線の起点。"}},
+  {id:"nankai",n:{en:"Nankai Wakayamashi",ja:"南海和歌山市駅"},lat:34.2321,lng:135.1714,info:{en:"Nankai Line terminal. Kada Line transfer.",ja:"南海本線の終点。加太線に乗換。"}},
+  {id:"koen",n:{en:"Koen-mae (Castle)",ja:"公園前（和歌山城）"},lat:34.2306,lng:135.1770,info:{en:"Closest to Wakayama Castle entrance.",ja:"和歌山城の入口に最も近い。"}},
+  {id:"kimii",n:{en:"Kimiidera",ja:"紀三井寺"},lat:34.1897,lng:135.1837,info:{en:"Near Kimiidera Temple. Routes 40/42/44.",ja:"紀三井寺の最寄り。40/42/44系統。"}},
+  {id:"wakaura",n:{en:"Wakanoura-guchi",ja:"和歌浦口"},lat:34.1971,lng:135.1597,info:{en:"Gateway to Wakaura scenic area.",ja:"和歌浦エリアの入口。"}},
+  {id:"marina",n:{en:"Marina City",ja:"マリーナシティ"},lat:34.1678,lng:135.1605,info:{en:"Kuroshio Market & Porto Europe.",ja:"黒潮市場・ポルトヨーロッパ。"}},
+  {id:"saika",n:{en:"Saikazaki",ja:"雑賀崎"},lat:34.1852,lng:135.1380,info:{en:"'Japan's Amalfi'. Route 30 loop.",ja:"日本のアマルフィ。30系統循環。"}},
+  {id:"burakuri",n:{en:"Burakuricho",ja:"ぶらくり丁"},lat:34.2330,lng:135.1760,info:{en:"Central shopping arcade.",ja:"中心商店街。"}},
+];
+const PLAN_INTERESTS=[
+  {id:"history",l:{en:"History & Culture",ja:"歴史文化"}},
+  {id:"nature",l:{en:"Nature & Scenery",ja:"自然・景色"}},
+  {id:"food",l:{en:"Local Food",ja:"グルメ"}},
+  {id:"spiritual",l:{en:"Temples & Shrines",ja:"寺社仏閣"}},
+  {id:"relax",l:{en:"Relax & Onsen",ja:"リラックス・温泉"}},
+  {id:"adventure",l:{en:"Adventure",ja:"アドベンチャー"}},
+];
+const PLAN_DATA={
+  history:[
+    {t:"9:00",n:{en:"Wakayama Castle",ja:"和歌山城"},d:{en:"Explore grounds and climb the tower",ja:"天守閣に登って市内一望"}},
+    {t:"10:30",n:{en:"Kishu Toshogu",ja:"紀州東照宮"},d:{en:"108 vermilion steps",ja:"108段の朱塗りの石段"}},
+    {t:"11:30",n:{en:"Wakayama Ramen",ja:"和歌山ラーメン"},d:{en:"Iconic tonkotsu-shoyu at Ide Shoten",ja:"井出商店で元祖の一杯"}},
+    {t:"13:00",n:{en:"Burakuricho",ja:"ぶらくり丁"},d:{en:"Old shopping arcade stroll",ja:"昔ながらの商店街を散策"}},
+  ],
+  nature:[
+    {t:"8:00",n:{en:"Wakaura Bay Walk",ja:"和歌浦湾散歩"},d:{en:"Scenic bay with mountain views",ja:"紀伊山地を望む絶景の湾"}},
+    {t:"9:30",n:{en:"Saikazaki Village",ja:"雑賀崎"},d:{en:"Japan's Amalfi hillside village",ja:"日本のアマルフィ"}},
+    {t:"11:00",n:{en:"Kada Beach",ja:"加太海岸"},d:{en:"Coastal scenery + Awashima Shrine",ja:"海岸美＋淡嶋神社"}},
+    {t:"12:30",n:{en:"Shirasu-don Lunch",ja:"しらす丼ランチ"},d:{en:"Fresh whitebait rice bowl",ja:"新鮮な生しらす丼"}},
+  ],
+  food:[
+    {t:"10:00",n:{en:"Kuroshio Market",ja:"黒潮市場"},d:{en:"Tuna show at 12:30 + seafood BBQ",ja:"12:30マグロ解体ショー＋海鮮BBQ"}},
+    {t:"13:00",n:{en:"Wakayama Ramen",ja:"和歌山ラーメン"},d:{en:"Must-have bowl + hayazushi",ja:"一杯＋早寿司"}},
+    {t:"14:30",n:{en:"Mikan Cafe",ja:"みかんカフェ"},d:{en:"Mandarin parfait & fresh juice",ja:"みかんパフェとジュース"}},
+    {t:"16:00",n:{en:"Burakuricho Snacks",ja:"ぶらくり丁食べ歩き"},d:{en:"Takoyaki, korokke, street food",ja:"たこ焼き、コロッケ、B級グルメ"}},
+  ],
+  spiritual:[
+    {t:"8:00",n:{en:"Kimiidera Temple",ja:"紀三井寺"},d:{en:"231 steps, panoramic views",ja:"231段の石段、パノラマ眺望"}},
+    {t:"9:30",n:{en:"Kishu Toshogu",ja:"紀州東照宮"},d:{en:"Tokugawa vermilion shrine",ja:"徳川ゆかりの朱塗り神社"}},
+    {t:"11:00",n:{en:"Awashima Shrine",ja:"淡嶋神社"},d:{en:"Doll shrine, women's health",ja:"人形奉納の神社"}},
+    {t:"12:30",n:{en:"Lunch + Reflection",ja:"ランチ＋振り返り"},d:{en:"Quiet meal near Kada coast",ja:"加太の海沿いで静かな食事"}},
+  ],
+};
+const OMAMORI=[
+  {n:{en:"Wakayama Castle",ja:"和歌山城"},bg:"linear-gradient(135deg,#2c1810,#8B4513,#D4A574)",b:{en:"Fortune",ja:"旅路に幸あれ"}},
+  {n:{en:"Nachi Falls",ja:"那智の滝"},bg:"linear-gradient(135deg,#1a4a6e,#2E86AB,#A0D2DB)",b:{en:"Clarity",ja:"心の清明"}},
+  {n:{en:"Kumano Kodo",ja:"熊野古道"},bg:"linear-gradient(135deg,#1a3a1a,#2d6a2d,#7CB342)",b:{en:"Strength",ja:"歩む道に力を"}},
+  {n:{en:"Tama Train",ja:"たま電車"},bg:"linear-gradient(135deg,#4a1942,#9C27B0,#E1BEE7)",b:{en:"Joy",ja:"喜びと幸運"}},
+];
+PLAN_DATA.relax=PLAN_DATA.nature;
+PLAN_DATA.adventure=PLAN_DATA.nature;
+
+// ═══ i18n ═══
+let lang="ja";
+const T={
+  ja:{title:"わかやまガイド",explore:"探索",faq:"FAQ",chat:"AI",trip:"旅程",survey:"調査",
+    welcome:"こんにちは。わかやまガイドAIです。\n\n観光スポットへの行き方、バスの乗り場、グルメ情報など、なんでもどうぞ。",
+    ph:"なんでも聞いてください…",langBtn:"EN",back:"戻る",
+    gCats:{gourmet:"グルメ",night:"夜・温泉",photo:"フォトスポット",spiritual:"巡礼",family:"ファミリー",omiyage:"お土産",safety:"安全・WiFi"},
+    stampT:"スタンプラリー",stampS:"/12 スタンプ",planT:"旅程プランナー",planD:"興味を選んで旅程を自動作成",couponT:"+1泊 10%OFF",
+    svStart:"アンケート開始",svNext:"次へ",svBack:"戻る",svDone:"完了",svThx:"ありがとうございます！",
+    svOma:"デジタルお守り",svCoupon:"クーポンコード",nJ:"日本",nW:"和歌山",
+    exhaust:"本日の無料枠を使い切りました。"},
+  en:{title:"Wakayama Guide",explore:"Explore",faq:"FAQ",chat:"AI",trip:"My Trip",survey:"Survey",
+    welcome:"Hello! I'm the Wakayama Guide AI.\n\nAsk about sightseeing, bus routes, food, and more.",
+    ph:"Ask me anything…",langBtn:"JP",back:"Back",
+    gCats:{gourmet:"Gourmet",night:"Night & Onsen",photo:"Photo Spots",spiritual:"Spiritual",family:"Family",omiyage:"Souvenirs",safety:"Safety & WiFi"},
+    stampT:"Stamp Rally",stampS:"/12 stamps",planT:"Day Planner",planD:"Pick interests → get a custom itinerary",couponT:"+1 Night 10% OFF",
+    svStart:"Start Survey",svNext:"Next",svBack:"Back",svDone:"Complete",svThx:"Thank you!",
+    svOma:"Digital Omamori",svCoupon:"Coupon Code",nJ:"Japan",nW:"Wakayama",
+    exhaust:"Daily free quota exhausted."}
+};
+function tx(){return T[lang]}
+function t(o){if(!o)return"";return typeof o==="string"?o:(o[lang]||o.en||"")}
+
+// ═══ FAQ DATA (from original) ═══
+const FAQ_JA=[
+  {id:"bus",name:"バス路線",items:[
+    {q:"バス乗り場の案内",a:"JR和歌山駅 西口1〜4番、東口5〜6番のりば\n\n1番→紀三井寺・マリーナシティ方面\n2番→和歌山城・和歌浦・雑賀崎方面\n3番→南海和歌山市駅方面\n4番→和歌山大学方面\n5番(東口)→紀伊風土記の丘方面\n6番(東口)→関西空港リムジンバス\n\n時刻検索\n"+NAV},
+    {q:"和歌山城へ",a:"2番のりば（西口）\n20・24・25・27系統 約10分「公園前」下車\n\n時刻検索\n"+NAV},
+    {q:"和歌浦へ",a:"2番のりば（西口）\n20・23・24・25系統 約25〜30分\n\n時刻検索\n"+NAV},
+    {q:"紀三井寺・マリーナシティへ",a:"1番のりば（西口）\n40・42・44系統\n紀三井寺約20分、マリーナ約30分\n\n時刻検索\n"+NAV},
+    {q:"雑賀崎へ",a:"2番のりば（西口）\n30系統（循環）約40分\n\n時刻検索\n"+NAV},
+  ]},
+  {id:"spots",name:"観光スポット",items:[
+    {q:"和歌山城",a:"紀州徳川家の居城。天守閣から市内一望。春は桜600本。動物園(無料)併設。\n入場料:大人410円\nバス:2番のりば約10分"},
+    {q:"雑賀崎",a:"「日本のアマルフィ」。漁師町の絶景と夕日の名所。\nバス:2番のりば30系統約40分"},
+    {q:"友ヶ島",a:"旧軍砲台跡が残る無人島。ラピュタの世界観。\n南海加太線「加太駅」→友ヶ島汽船約20分\n往復:大人2,200円"},
+    {q:"紀三井寺",a:"関西最速の桜の名所。境内から和歌浦一望。\nバス:1番のりば約20分"},
+  ]},
+  {id:"gourmet",name:"グルメ",items:[
+    {q:"和歌山ラーメン",a:"井出商店(元祖・濃厚豚骨醤油)\n丸三(あっさり老舗)\n\n「早寿司」をサイドに頼むのが和歌山流。"},
+    {q:"名物一覧",a:"和歌山ラーメン/しらす丼/梅干し/みかん/柿の葉寿司/めはり寿司/クエ鍋(冬)"},
+  ]},
+  {id:"tips",name:"お役立ち",items:[
+    {q:"観光案内所",a:"JR和歌山駅構内(中央改札右)\n9:00〜17:30 / パンフレット無料"},
+    {q:"バス時刻検索",a:"和歌山バス時刻検索:\n"+NAV},
+    {q:"Wi-Fi",a:"WAKAYAMA Free Wi-Fi\nJR和歌山駅・和歌山城・マリーナシティ等\nメール登録/1回30分"},
+  ]},
+];
+const FAQ_EN=[
+  {id:"bus",name:"Bus Routes",items:[
+    {q:"Bus stop guide",a:"JR Wakayama Sta. West Exit: 1-4, East: 5-6\n\n1→Kimiidera, Marina City\n2→Castle, Wakanoura\n3→Nankai Sta.\n4→Wakayama Univ.\n5(East)→Fudoki-no-Oka\n6(East)→KIX Airport\n\n"+NAV},
+    {q:"To Wakayama Castle",a:"Stop 2 (West)\nRoute 20/24/25/27 ~10min\n'Koen-mae' stop\n\n"+NAV},
+  ]},
+  {id:"spots",name:"Sightseeing",items:[
+    {q:"Wakayama Castle",a:"Edo castle, city views, 600 cherry trees, free zoo.\nAdmission: ¥410\nBus: Stop 2, ~10min"},
+    {q:"Tomogashima Island",a:"Abandoned fort ruins. 'Real Laputa'.\nFerry: ¥2,200 round trip"},
+  ]},
+  {id:"tips",name:"Useful Info",items:[
+    {q:"Tourist info",a:"Inside JR Station (right of central gate)\n9:00-17:30 / Free maps"},
+    {q:"Wi-Fi",a:"WAKAYAMA Free Wi-Fi at Station, Castle, Marina City"},
+  ]},
+];
+
+// ═══ MODELS ═══
+const MODELS={lite:{id:"gemini-2.5-flash-lite",label:"Lite",limit:1000,color:"var(--green)"},flash:{id:"gemini-2.5-flash",label:"Flash",limit:250,color:"var(--amber)"},pro:{id:"gemini-2.5-pro",label:"Pro",limit:100,color:"var(--indigo)"}};
+
+// ═══ STATE ═══
+let apiKey="";try{apiKey=sessionStorage.getItem("gemini_key")||""}catch{}
+let messages=[],loading=false,isListening=false,voiceOn=false,recognition=null;
+let usage={date:new Date().toDateString(),lite:0,flash:0,pro:0};
+const dead=new Set();
+let faqLv="home",faqCat=null,faqIdx=null;
+let stamps=[];try{stamps=JSON.parse(localStorage.getItem("wky_stamps"))||[]}catch{}
+let svStep=-1,svAns={},svNJ=1,svNW=1;
+let exploreMode="home",exploreCat=null;
+
+
+let userLat=null,userLng=null,busLocating=false;
+let planStep=0, planPicks=[];
+let pendingStampId=null;
+// ═══ INIT ═══
+document.addEventListener("DOMContentLoaded",()=>{
+  applyLang();addWelcome();updKeyBtn();
+  document.getElementById("chatIn").addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();sendMsg()}});
+  document.getElementById("chatIn").addEventListener("input",updSend);
+  crmLog("session_start",{lang});
+});
+
+function applyLang(){
+  const t=tx();
+  document.getElementById("hdTitle").textContent=t.title;
+  document.getElementById("langBtn").textContent=t.langBtn;
+  document.getElementById("chatIn").placeholder=t.ph;
+  document.getElementById("nb0").textContent=t.explore;
+  document.getElementById("nb1").textContent=t.faq;
+  document.getElementById("nb2").textContent=t.chat;
+  document.getElementById("nb3").textContent=t.trip;
+  document.getElementById("nb4").textContent=t.survey;
+  renderExplore();renderFaq();renderTrip();renderSurvey();
+}
+function toggleLang(){lang=lang==="ja"?"en":"ja";applyLang()}
+
+// ═══ NAV ═══
+function showV(v){
+  if(v==="chat"&&!apiKey){showModal();return}
+  const views=["explore","faq","chat","trip","survey"];
+  views.forEach(id=>document.getElementById(id+"View").classList.toggle("on",id===v));
+  document.querySelectorAll(".bn").forEach((b,i)=>b.classList.toggle("on",views[i]===v));
+  if(v==="chat")scrollChat();
+  crmLog("tab_view",{tab:v});
+}
+
+// ═══ EXPLORE ═══
+
+function renderExplore(){
+  const el=document.getElementById("exploreScroll"),t=tx();
+  if(exploreMode==="home"){
+    const cats=GCATS.map(c=>{
+      const items=GUIDES.filter(g=>g.cat===c.id);
+      return `<div class="gcat" onclick="openGCat('${c.id}')"><div class="gn">${t.gCats[c.id]||c.id}</div><div class="gc">${items.length}${lang==="ja"?"件":" items"}</div></div>`;
+    }).join("");
+    el.innerHTML=`<div class="sec-title">${lang==="ja"?"ガイドカテゴリ":"GUIDE CATEGORIES"}</div><div class="guide-cats">${cats}</div>`;
+  }else{
+    const items=GUIDES.filter(g=>g.cat===exploreCat);
+    el.innerHTML=`<button class="back-btn" onclick="exploreMode='home';renderExplore()">${t.back}</button>
+    <div class="sec-title">${(t.gCats[exploreCat]||exploreCat).toUpperCase()}</div>
+    <div class="guide-list">${items.map(g=>`<div class="gi" onclick="this.classList.toggle('open');crmLog('guide_view',{id:'${g.id}'})">
+      <h3>${tt(g.n)}</h3><div class="gm">${tt(g.area)||""}${g.h?" · "+g.h:""}${g.p?" · "+(typeof g.p==="string"?g.p:tt(g.p)):""}</div>
+      <div class="gd">${tt(g.d)}${g.tip?"<br><b>"+(lang==="ja"?"ヒント: ":"Tip: ")+"</b>"+tt(g.tip):""}</div>
+      <div class="gtags">${g.rec?'<span class="gtag gtag-g">'+(lang==="ja"?"推薦":"TOP")+"</span>":""}</div>
+    </div>`).join("")}</div>`;
+  }
+}
+function openGCat(id){exploreMode="cat";exploreCat=id;renderExplore();crmLog("cat_view",{cat:id})}
+function tt(o){return t(o)}
+
+// ═══ FAQ ═══
+function curFaq(){return lang==="ja"?FAQ_JA:FAQ_EN}
+
+// ═══ BUS STOP NAVIGATOR ═══
+
+
+
+
+function distKm(lat1,lng1,lat2,lng2){
+  const R=6371,dLat=(lat2-lat1)*Math.PI/180,dLng=(lng2-lng1)*Math.PI/180;
+  const a=Math.sin(dLat/2)**2+Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLng/2)**2;
+  return R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
+}
+
+function bearingDir(lat1,lng1,lat2,lng2){
+  const dLng=(lng2-lng1)*Math.PI/180;
+  const y=Math.sin(dLng)*Math.cos(lat2*Math.PI/180);
+  const x=Math.cos(lat1*Math.PI/180)*Math.sin(lat2*Math.PI/180)-Math.sin(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.cos(dLng);
+  const b=(Math.atan2(y,x)*180/Math.PI+360)%360;
+  const dirs=["N","NE","E","SE","S","SW","W","NW"];
+  const arrows=["^","^>",">","v>","v","<v","<","<^"];
+  return arrows[Math.round(b/45)%8];
+}
+
+function locateBus(){
+  if(busLocating)return;
+  if(!navigator.geolocation){renderBusResult("nogeo");return}
+  busLocating=true;
+  renderBusResult("loading");
+  navigator.geolocation.getCurrentPosition(
+    pos=>{userLat=pos.coords.latitude;userLng=pos.coords.longitude;busLocating=false;renderBusResult("ok")},
+    err=>{busLocating=false;renderBusResult("err")},
+    {enableHighAccuracy:true,timeout:8000}
+  );
+}
+
+function renderBusNav(){
+  const btnL=lang==="ja"?"現在地から探す":"Find from my location";
+  const titleL=lang==="ja"?"最寄りバス停":"Nearest bus stops";
+  let content="";
+  if(userLat){
+    content=renderBusStops();
+  }else{
+    content=`<div class="bus-loading" style="padding:6px 0"><button class="bus-nav-btn" onclick="locateBus()" style="width:100%;padding:10px">${btnL}</button></div>`;
+  }
+  return `<div class="bus-nav"><div class="bus-nav-hd"><h3>${titleL}</h3>${userLat?`<button class="bus-nav-btn" onclick="locateBus()">${lang==="ja"?"更新":"Refresh"}</button>`:""}</div>${content}</div>`;
+}
+
+function renderBusStops(){
+  const sorted=BUS_STOPS.map(s=>{
+    const d=distKm(userLat,userLng,s.lat,s.lng);
+    const dir=bearingDir(userLat,userLng,s.lat,s.lng);
+    return {...s,dist:d,dir};
+  }).sort((a,b)=>a.dist-b.dist).slice(0,3);
+  return `<div class="bus-result">${sorted.map(s=>{
+    const dStr=s.dist<1?(Math.round(s.dist*1000)+"m"):(s.dist.toFixed(1)+"km");
+    return `<div class="bus-stop"><div class="bus-stop-dist"><div class="num">${dStr.replace(/[a-z]+/,"")}</div><div class="unit">${dStr.replace(/[0-9.]+/,"")}</div></div><div class="bus-stop-info"><h4>${tt(s.n)}</h4><p>${tt(s.info)}</p></div><div class="bus-stop-dir">${s.dir}</div></div>`;
+  }).join("")}</div>`;
+}
+
+function renderBusResult(state){
+  const el=document.getElementById("busNavArea");
+  if(!el)return;
+  if(state==="loading"){el.innerHTML=`<div class="bus-loading">${lang==="ja"?"位置情報を取得中...":"Getting your location..."}</div>`}
+  else if(state==="err"){el.innerHTML=`<div class="bus-err">${lang==="ja"?"位置情報を取得できませんでした。<br>端末の位置情報設定をご確認ください。":"Could not get location.<br>Check your device settings."}</div>`}
+  else if(state==="nogeo"){el.innerHTML=`<div class="bus-err">${lang==="ja"?"この端末では位置情報を利用できません。":"Geolocation not available."}</div>`}
+  else{el.innerHTML=renderBusStops()}
+}
+
+function renderFaq(){
+  const el=document.getElementById("faqScroll"),faq=curFaq();
+  if(faqLv==="home"){
+    el.innerHTML=`${renderBusNav()}<div class="faq-home">${faq.map(c=>`<div class="cat-card" onclick="openFC('${c.id}')"><div class="cn">${c.name}</div><div class="cc">${c.items.length}${lang==="ja"?"件":" items"}</div></div>`).join("")}</div>`;
+    const navArea=el.querySelector('.bus-nav .bus-result, .bus-nav .bus-loading');
+    if(navArea)navArea.id="busNavArea";
+  }else if(faqLv==="cat"){
+    const c=faq.find(x=>x.id===faqCat);
+    el.innerHTML=`<div class="faq-bread"><button onclick="faqLv='home';renderFaq()">${lang==="ja"?"ホーム":"Home"}</button><span>›</span><span>${c.name}</span></div><div class="anim">${c.items.map((it,i)=>`<button class="faq-q" onclick="openFA('${faqCat}',${i})">${it.q}</button>`).join("")}</div>`;
+  }else{
+    const c=faq.find(x=>x.id===faqCat),it=c.items[faqIdx];
+    el.innerHTML=`<div class="faq-bread"><button onclick="faqLv='home';renderFaq()">${lang==="ja"?"ホーム":"Home"}</button><span>›</span><button onclick="openFC('${faqCat}')">${c.name}</button><span>›</span></div><div class="faq-ans anim"><h3>${it.q}</h3><div class="body">${lnk(it.a)}</div></div>`;
+  }
+  el.scrollTop=0;
+}
+function openFC(id){faqLv="cat";faqCat=id;renderFaq()}
+function openFA(c,i){faqLv="answer";faqCat=c;faqIdx=i;renderFaq()}
+function lnk(s){return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/(https?:\/\/[^\s<]+)/g,'<a href="$1" target="_blank">$1</a>').replace(/\n/g,"<br>")}
+
+// ═══ CHAT (from original, condensed) ═══
+const SYSTEM_PROMPT=`あなたは「わかやまガイドAI」。和歌山市の観光案内AI。バスのりば、観光スポット、グルメを案内。200文字以内で完結。確信のない情報は「観光案内所でご確認ください」と添える。時刻検索URL: ${NAV}`;
+function addWelcome(){messages=[{role:"assistant",content:tx().welcome,model:null}];renderChat()}
+function renderChat(){
+  const el=document.getElementById("chatScroll");
+  el.innerHTML=messages.map(m=>{
+    const u=m.role==="user";
+    let bd="";if(!u&&m.model){const md=MODELS[m.model];bd=`<div class="mbadge" style="color:${md.color};background:${md.color}12"><span class="dot" style="background:${md.color}"></span>${md.label}</div>`}
+    return`<div class="msg ${u?"user":"assistant"}"><div class="bubble">${lnk(m.content)}</div>${bd}</div>`;
+  }).join("");scrollChat();
+}
+function scrollChat(){const e=document.getElementById("chatScroll");requestAnimationFrame(()=>e.scrollTop=e.scrollHeight)}
+function showTyp(tier){const md=MODELS[tier],c=md.color;document.getElementById("chatScroll").innerHTML+=`<div class="typing" id="typI"><div class="typing-in"><div class="dots"><div class="d" style="background:${c}"></div><div class="d" style="background:${c}"></div><div class="d" style="background:${c}"></div></div></div></div>`;scrollChat()}
+function hideTyp(){const e=document.getElementById("typI");if(e)e.remove()}
+function showErr(m){document.getElementById("chatScroll").innerHTML+=`<div class="err-msg">${m}</div>`;scrollChat()}
+function rstDay(){const d=new Date().toDateString();if(usage.date!==d)usage={date:d,lite:0,flash:0,pro:0}}
+function canUse(t){rstDay();return usage[t]<MODELS[t].limit}
+function inc(t){rstDay();usage[t]++;updUI()}
+function updUI(){rstDay();const r={l:MODELS.lite.limit-usage.lite,f:MODELS.flash.limit-usage.flash,p:MODELS.pro.limit-usage.pro};document.getElementById("uL").style.width=(r.l/MODELS.lite.limit*100)+"%";document.getElementById("uF").style.width=(r.f/MODELS.flash.limit*100)+"%";document.getElementById("uP").style.width=(r.p/MODELS.pro.limit*100)+"%";document.getElementById("uC").textContent=(r.l+r.f+r.p).toLocaleString()}
+function classify(t){if(/^(こんにちは|ありがとう|はい|hello|hi|thanks|bye|ok)/i.test(t.trim())||t.trim().length<8)return"lite";return"flash"}
+function tierQ(t){const p=classify(t);return(p==="lite"?["lite","flash","pro"]:["flash","lite","pro"]).filter(x=>canUse(x)&&!dead.has(x))}
+async function callAI(tier,hist){
+  const url=`https://generativelanguage.googleapis.com/v1beta/models/${MODELS[tier].id}:generateContent?key=${apiKey}`;
+  const body={system_instruction:{parts:[{text:SYSTEM_PROMPT}]},contents:hist,generationConfig:{maxOutputTokens:4096,temperature:0.7}};
+  const res=await fetch(url,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)});
+  if(!res.ok){const e=await res.json().catch(()=>({}));const msg=e?.error?.message||"Error";if(res.status===429||msg.includes("quota")){dead.add(tier);const err=new Error(msg);err.isQuota=true;throw err}throw new Error(msg)}
+  const d=await res.json();return d?.candidates?.[0]?.content?.parts?.map(p=>p.text).join("")||"";
+}
+async function sendMsg(ov){
+  const inp=document.getElementById("chatIn"),text=(ov||inp.value).trim();
+  if(!text||loading)return;inp.value="";updSend();
+  const q=tierQ(text);if(!q.length){showErr(tx().exhaust);return}
+  messages.push({role:"user",content:text,model:null});renderChat();loading=true;
+  const hist=messages.filter((_,i)=>i>0).map(m=>({role:m.role==="assistant"?"model":"user",parts:[{text:m.content}]}));
+  for(const tier of q){hideTyp();showTyp(tier);try{const reply=await callAI(tier,hist);inc(tier);messages.push({role:"assistant",content:reply,model:tier});hideTyp();renderChat();
+    crmLog("chat",{q:text,a:reply.substring(0,200),model:tier});
+    break}catch(e){if(e.isQuota)continue;hideTyp();showErr(e.message);break}}
+  loading=false;updUI();
+}
+function updSend(){document.getElementById("sendBtn").classList.toggle("ready",!!document.getElementById("chatIn").value.trim())}
+function toggleV(){voiceOn=!voiceOn;document.getElementById("vBtn").textContent=voiceOn?"🔊":"🔇"}
+function toggleMic(){if(isListening){recognition?.stop();return}const SR=window.SpeechRecognition||window.webkitSpeechRecognition;if(!SR)return;recognition=new SR();recognition.lang=lang==="ja"?"ja-JP":"en-US";recognition.continuous=false;recognition.onresult=e=>{document.getElementById("chatIn").value=e.results[0][0].transcript;updSend();setLis(false);setTimeout(()=>sendMsg(),200)};recognition.onerror=recognition.onend=()=>setLis(false);recognition.start();setLis(true)}
+function setLis(v){isListening=v;document.getElementById("micBtn").classList.toggle("on",v)}
+function showModal(){document.getElementById("keyModal").classList.add("show")}
+function closeModal(){document.getElementById("keyModal").classList.remove("show");showV("explore")}
+function updSave(){document.getElementById("saveBtn").classList.toggle("ready",!!document.getElementById("keyIn").value.trim())}
+function saveKey(){const v=document.getElementById("keyIn").value.trim();if(!v)return;apiKey=v;try{sessionStorage.setItem("gemini_key",v)}catch{}document.getElementById("keyModal").classList.remove("show");updKeyBtn();showV("chat")}
+function resetKey(){apiKey="";try{sessionStorage.removeItem("gemini_key")}catch{}updKeyBtn();showV("explore")}
+function updKeyBtn(){document.getElementById("keyBtn").style.display=apiKey?"block":"none"}
+
+// ═══ MY TRIP ═══
+function saveStamps(){try{localStorage.setItem("wky_stamps",JSON.stringify(stamps))}catch{}}
+function renderTrip(){
+  const el=document.getElementById("tripScroll"),t=tx();
+  const pct=(stamps.length/STAMPS.length*100);
+  el.innerHTML=`
+    <div class="sec-title">${t.stampT}</div>
+    <div style="text-align:center;font-size:20px;font-weight:700;color:var(--indigo);margin-bottom:8px">${stamps.length}${t.stampS}</div>
+    <div class="prog-bar"><div class="prog-fill" style="width:${pct}%"></div></div>
+    <div class="stamp-grid">${STAMPS.map(s=>{
+      const got=stamps.includes(s.id);
+      return `<div class="st-item${got?" got":""}" onclick="collectStamp('${s.id}')">
+        <div class="st-check${got?" done":" empty"}">${got?"✓":""}</div>
+        <div class="st-n">${tt(s.n)}</div>
+      </div>`;
+    }).join("")}</div>
+    <div class="trip-card" onclick="showPlanner()"><h3>${t.planT}</h3><p>${t.planD}</p></div>
+    <div id="plannerArea"></div>
+  `;
+}
+function getStampCode(id){const d=new Date().toISOString().slice(0,10);let h=0;for(let i=0;i<(id+d).length;i++){h=((h<<5)-h)+(id+d).charCodeAt(i);h|=0}return String(Math.abs(h)%9000+1000)}
+
+
+
+function collectStamp(id){
+  if(stamps.includes(id))return;
+  pendingStampId=id;
+  const sp=STAMPS.find(s=>s.id===id);
+  document.getElementById("smTitle").textContent=tt(sp.n);
+  document.getElementById("smDesc").textContent=lang==="ja"
+    ?"スポットに掲示された4桁コードを入力してください"
+    :"Enter the 4-digit code displayed at this spot";
+  document.getElementById("smErr").textContent="";
+  document.getElementById("smBtn").textContent=lang==="ja"?"確認":"Verify";
+  document.getElementById("smBtn").className="sbtn";
+  for(let i=0;i<4;i++){document.getElementById("cd"+i).value=""}
+  document.getElementById("stampModal").classList.add("show");
+  setTimeout(()=>document.getElementById("cd0").focus(),300);
+}
+
+function onDigit(i){
+  const el=document.getElementById("cd"+i);
+  el.value=el.value.replace(/[^0-9]/g,"").slice(0,1);
+  if(el.value&&i<3){document.getElementById("cd"+(i+1)).focus()}
+  const full=[0,1,2,3].every(j=>document.getElementById("cd"+j).value.length===1);
+  document.getElementById("smBtn").className="sbtn"+(full?" ready":"");
+}
+
+function verifyStamp(){
+  const code=[0,1,2,3].map(i=>document.getElementById("cd"+i).value).join("");
+  if(code.length!==4)return;
+  const expected=getStampCode(pendingStampId);
+  if(code===expected){
+    stamps.push(pendingStampId);saveStamps();
+    closeStampModal();renderTrip();
+    crmLog("stamp",{spot:pendingStampId,total:stamps.length});
+  }else{
+    document.getElementById("smErr").textContent=lang==="ja"
+      ?"コードが違います。スポットの掲示をご確認ください。"
+      :"Incorrect code. Check the sign at the spot.";
+    for(let i=0;i<4;i++){document.getElementById("cd"+i).value=""}
+    document.getElementById("cd0").focus();
+    document.getElementById("smBtn").className="sbtn";
+  }
+}
+
+function closeStampModal(){
+  document.getElementById("stampModal").classList.remove("show");
+  pendingStampId=null;
+}
+
+// ═══ SURVEY ═══
+
+
+function renderSurvey(){
+  const el=document.getElementById("surveyScroll"),t=tx();
+  if(svStep===-1){
+    el.innerHTML=`<div style="text-align:center;padding-top:20vh"><h2 style="font-size:18px;color:var(--indigo);margin-bottom:8px">${lang==="ja"?"観光アンケート":"Tourism Survey"}</h2><p style="font-size:12px;color:var(--t2);margin-bottom:20px">${lang==="ja"?"約3分 · お守り＆クーポンGET":"~3 min · Earn omamori & coupon"}</p><button class="sv-btn sv-btn-next" onclick="svStep=0;renderSurvey()">${t.svStart}</button></div>`;
+    return;
+  }
+  if(svStep>=SV_Q.length){
+    // Complete
+    const om=OMAMORI[Math.floor(Math.random()*OMAMORI.length)];
+    const code="WKY-"+Date.now().toString(36).toUpperCase().slice(-6);
+    el.innerHTML=`<div style="text-align:center;padding-top:16px" class="anim">
+      <div class="omamori" style="background:${om.bg}"><div class="om-i">御</div><div class="om-n">${tt(om.n)}</div><div class="om-b">${tt(om.b)}</div></div>
+      <h2 style="font-size:18px;color:var(--indigo)">${t.svThx}</h2>
+      <p style="font-size:12px;color:var(--t2);margin:8px 0 16px">${t.svOma}</p>
+      <div class="coupon-box"><div style="font-size:10px;opacity:.6">${t.couponT}</div><div style="font-size:22px;font-weight:700;margin:4px 0">10% OFF</div><div class="coupon-code">${code}</div><div style="font-size:9px;opacity:.5;margin-top:6px">${lang==="ja"?"7日間有効":"Valid 7 days"}</div></div>
+      <button class="sv-btn sv-btn-back" style="margin-top:16px" onclick="svStep=-1;svAns={};renderSurvey()">${lang==="ja"?"次の回答":"New Response"}</button>
+    </div>`;
+    // Submit to GAS
+    submitSurvey();
+    return;
+  }
+  const q=SV_Q[svStep];
+  let body="";
+  if(q.tp==="t"){
+    body=`<input class="sv-input" type="text" placeholder="${tt(q.ph)||""}" value="${svAns[q.id]||""}" oninput="svAns['${q.id}']=this.value;updSvNav()" autofocus>`;
+  }else if(q.tp==="s"){
+    body=`<div class="sv-opts">${q.o.map(o=>`<button class="sv-opt${svAns[q.id]===o.v?" sel":""}" onclick="svAns['${q.id}']='${o.v}';renderSurvey();setTimeout(()=>{svStep++;renderSurvey()},180)">${tt(o.l)}</button>`).join("")}</div>`;
+  }else if(q.tp==="m"){
+    body=`<div class="sv-opts">${q.o.map(o=>{const sel=(svAns[q.id]||[]).includes(o.v);return `<button class="sv-opt${sel?" sel":""}" onclick="svToggleM('${q.id}','${o.v}')">${tt(o.l)}</button>`}).join("")}</div>`;
+  }else if(q.tp==="n"){
+    body=`<div class="sv-night"><div class="sv-nf"><label>${t.nJ}</label><div class="sv-stepper"><button class="sv-sb" onclick="svNJ=Math.max(0,svNJ-1);renderSurvey()">-</button><div class="sv-sv">${svNJ}</div><button class="sv-sb" onclick="svNJ++;renderSurvey()">+</button></div></div><div class="sv-nf"><label>${t.nW}</label><div class="sv-stepper"><button class="sv-sb" onclick="svNW=Math.max(0,svNW-1);renderSurvey()">-</button><div class="sv-sv">${svNW}</div><button class="sv-sb" onclick="svNW++;renderSurvey()">+</button></div></div></div>`;
+  }
+  const canNext=q.tp==="n"||q.tp==="s"||(q.tp==="t"&&svAns[q.id])||(q.tp==="m"&&(svAns[q.id]||[]).length>0);
+  el.innerHTML=`<div class="anim">
+    <div class="sv-progress">${svStep+1} / ${SV_Q.length}</div>
+    <div class="sv-q">${tt(q.t)}</div>
+    ${body}
+    <div class="sv-nav">
+      ${svStep>0?`<button class="sv-btn sv-btn-back" onclick="svStep--;renderSurvey()">${t.svBack}</button>`:""}
+      ${q.tp!=="s"?`<button class="sv-btn sv-btn-next" ${canNext?"":"disabled"} onclick="svStep++;renderSurvey()">${svStep===SV_Q.length-1?t.svDone:t.svNext}</button>`:""}
+    </div>
+  </div>`;
+  el.scrollTop=0;
+}
+function svToggleM(id,v){let c=svAns[id]||[];if(v==="no"){svAns[id]=["no"]}else{c=c.filter(x=>x!=="no");svAns[id]=c.includes(v)?c.filter(x=>x!==v):[...c,v]}renderSurvey()}
+function updSvNav(){const q=SV_Q[svStep];if(!q)return;const btn=document.querySelector('.sv-btn-next');if(!btn)return;const canNext=q.tp==="n"||q.tp==="s"||(q.tp==="t"&&svAns[q.id])||(q.tp==="m"&&(svAns[q.id]||[]).length>0);btn.disabled=!canNext}
+function submitSurvey(){
+  if(!GAS_URL)return;
+  const payload={sid:SID,type:"survey",timestamp:new Date().toISOString(),lang,...svAns,nights_japan:svNJ,nights_wakayama:svNW};
+  try{const p=new URLSearchParams({action:"survey",data:JSON.stringify(payload).substring(0,1900)});new Image().src=GAS_URL+"?"+p}catch{}
+  crmLog("survey_complete",{answers:Object.keys(svAns).length});
+}
+
+// ═══ INLINE PLANNER ═══
+
+
+
+
+
+
+function showPlanner(){planStep=0;planPicks=[];renderPlanner()}
+function renderPlanner(){
+  const el=document.getElementById("plannerArea"),t=tx();
+  if(planStep===0){
+    el.innerHTML=`<div style="margin-top:12px" class="anim">
+      <div style="font-size:14px;font-weight:600;text-align:center;margin-bottom:12px">${lang==="ja"?"興味を選んでください（最大2つ）":"Pick your interests (max 2)"}</div>
+      <div class="sv-opts">${PLAN_INTERESTS.map(i=>`<button class="sv-opt${planPicks.includes(i.id)?" sel":""}" onclick="planToggle('${i.id}')">${tt(i.l)}</button>`).join("")}</div>
+      <div class="sv-nav"><button class="sv-btn sv-btn-next" ${planPicks.length===0?"disabled":""} onclick="planStep=1;renderPlanner()">${lang==="ja"?"プラン作成":"Build Plan"}</button></div>
+    </div>`;
+  } else {
+    const key=planPicks[0];
+    const plan=PLAN_DATA[key]||PLAN_DATA.history;
+    el.innerHTML=`<div style="margin-top:12px" class="anim">
+      <div style="font-size:14px;font-weight:600;text-align:center;margin-bottom:12px">${lang==="ja"?"あなたの和歌山プラン":"Your Wakayama Plan"}</div>
+      ${plan.map(p=>`<div style="display:flex;gap:12px;padding:12px 0;border-bottom:1px solid var(--ib)">
+        <div style="font-size:13px;font-weight:700;color:var(--sky);min-width:50px">${p.t}</div>
+        <div><div style="font-size:13px;font-weight:600">${tt(p.n)}</div><div style="font-size:11px;color:var(--t2)">${tt(p.d)}</div></div>
+      </div>`).join("")}
+      <div class="sv-nav"><button class="sv-btn sv-btn-back" onclick="planStep=0;renderPlanner()">${lang==="ja"?"やり直す":"Start Over"}</button></div>
+    </div>`;
+    crmLog("planner",{interest:key});
+  }
+}
+function planToggle(id){if(planPicks.includes(id))planPicks=planPicks.filter(x=>x!==id);else if(planPicks.length<2)planPicks.push(id);renderPlanner()}
+</script>
+</body>
+</html>
