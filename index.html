@@ -522,7 +522,7 @@ function bearingDir(lat1,lng1,lat2,lng2){
   const x=Math.cos(lat1*Math.PI/180)*Math.sin(lat2*Math.PI/180)-Math.sin(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.cos(dLng);
   const b=(Math.atan2(y,x)*180/Math.PI+360)%360;
   const dirs=["N","NE","E","SE","S","SW","W","NW"];
-  const arrows=["^","^>",">","v>","v","<v","<","<^"];
+  const arrows=["\u2191","\u2197","\u2192","\u2198","\u2193","\u2199","\u2190","\u2196"];
   return arrows[Math.round(b/45)%8];
 }
 
@@ -540,7 +540,7 @@ function locateBus(){
 
 function renderBusNav(){
   const btnL=lang==="ja"?"現在地から探す":"Find from my location";
-  const titleL=lang==="ja"?"最寄りバス停":"Nearest bus stops";
+  const titleL=lang==="ja"?"最寄りの主要なバス停":"Nearest major bus stops";
   let content="";
   if(userLat){
     content=renderBusStops();
